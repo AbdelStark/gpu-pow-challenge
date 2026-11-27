@@ -1,19 +1,16 @@
 # Rust
 /target
-**/*.rs.bk
-rustc-ice-*.txt
-**/mutants.out*/
 
 # Build products and fetched toolchains
 /build
 /third_party
 /.cuda
 
-# Benchmark outputs (results.tsv is a local log; score/run are regenerated)
+# Benchmark outputs (regenerated on every run)
 /results
 
-# Local agent state
+# Local state
 .claude/
 .autoresearch
-**/.DS_Store
 __pycache__/
+.DS_Store

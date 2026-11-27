@@ -24,6 +24,11 @@ path = "src/bin/tpow-cpu-solver.rs"
 name = "tpow-kat"
 path = "src/bin/tpow-kat.rs"
 
+# Adversarial worker used only by the harness self-tests (tests/harness.rs).
+[[bin]]
+name = "tpow-evil-solver"
+path = "src/bin/tpow-evil-solver.rs"
+
 [dependencies]
 sha2 = { version = "0.10", features = ["compress"] }
 rayon = "1.10"
@@ -40,8 +45,3 @@ panic = "unwind"
 
 [profile.test]
 opt-level = 3
-
-# Adversarial worker used only by the harness self-tests (tests/harness.rs).
-[[bin]]
-name = "tpow-evil-solver"
-path = "src/bin/tpow-evil-solver.rs"

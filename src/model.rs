@@ -42,7 +42,7 @@ impl Model {
         assert_eq!(out.len() as u64, p.m as u64 * row_bytes);
         let first_row = unit.checked_mul(p.m as u64).expect("unit index overflow");
         let first_block = first_row * (row_bytes / 32);
-        // SAFETY-free reinterpretation: i8 and u8 have identical layout.
+        // SAFETY: i8 and u8 have identical size and alignment.
         let bytes: &mut [u8] =
             unsafe { std::slice::from_raw_parts_mut(out.as_mut_ptr() as *mut u8, out.len()) };
         prg::fill(&self.seed, STREAM_X, first_block, bytes);
@@ -87,6 +87,7 @@ pub fn unit_digest(seed: &[u8; 32], unit: u64, y: &[i8]) -> [u8; DIGEST_BYTES] {
     hasher.update(DIGEST_PREFIX);
     hasher.update(seed);
     hasher.update(unit.to_le_bytes());
+    // SAFETY: i8 and u8 have identical size and alignment.
     let bytes: &[u8] = unsafe { std::slice::from_raw_parts(y.as_ptr() as *const u8, y.len()) };
     hasher.update(bytes);
     let full: [u8; 32] = hasher.finalize().into();

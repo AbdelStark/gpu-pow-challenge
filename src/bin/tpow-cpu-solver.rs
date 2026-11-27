@@ -35,9 +35,6 @@ fn main() {
         if line.trim().is_empty() {
             continue;
         }
-        if line.trim() == "QUIT" {
-            break;
-        }
         let (seed, first, n) = parse_run_line(&line).unwrap_or_else(|e| {
             eprintln!("cpu-solver: {e}");
             std::process::exit(1)

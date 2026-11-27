@@ -45,8 +45,9 @@ harness                    SIGKILL the worker's process group, reap, wipe scratc
 ```
 
 The worker must stay alive after its last byte until the harness kills it. A
-worker that exits on its own fails the trial, because exiting early could hide
-CPU time from the `/proc` accounting (§6).
+worker that exits on its own within 0.5 s of its last byte (watched outside the
+clock) fails the trial, because exiting early could hide CPU time from the
+`/proc` accounting (§6).
 
 Contestants implement two C functions (`worker/tpow_solver.h`):
 `tpow_init` (untimed: contexts, allocation, autotuning, warm-up with any seed)
@@ -139,8 +140,7 @@ at 100 ms by `nvidia-smi` and reported per trial.
   and its own process group.
 * Self-test: `tests/harness.rs::sandbox_blocks_escapes` runs an adversarial worker
   that tries the network, writes to `/etc` and `/usr`, reads the harness's
-  environment and lists `/home`. All must fail. The same worker unsandboxed does
-  escape, which confirms the test has teeth.
+  environment and lists `/home`. All must fail.
 * Some driver/kernel combinations refuse `cuInit` inside unprivileged user
   namespaces. Then set `"sandbox_user_namespace": false` for that host (the other
   isolation layers remain).

@@ -20,8 +20,12 @@ jobs:
         with:
           persist-credentials: false
 
+      # The runner image ships third-party apt sources (e.g. packages.microsoft.com)
+      # that intermittently fail `apt-get update`; only Ubuntu packages are needed.
       - name: System packages
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq bubblewrap jq python3-numpy
+        run: |
+          sudo apt-get update -qq || echo "::warning::apt-get update reported errors; continuing"
+          sudo apt-get install -y -qq bubblewrap jq python3-numpy
 
       - name: Allow unprivileged user namespaces (for bubblewrap)
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
@@ -51,13 +55,14 @@ jobs:
       - name: Fetch CUDA toolchain
         run: tools/fetch-cuda-redist.sh .cuda
 
-      - name: Compile every solver for sm_90a
+      - name: Fetch pinned CUTLASS
+        run: tools/fetch-cutlass.sh
+
+      - name: Compile every solver for sm_90a (same script and flags as benchmark.sh)
         run: |
           set -euo pipefail
           for d in solvers/*/; do
-            echo "== $d"
-            .cuda/bin/nvcc -O3 -std=c++17 -arch=sm_90a -I worker -I "$d" worker/main.cpp "$d"*.cu \
-              -L .cuda/lib64 -lcublasLt -lcublas -o /tmp/solver-$(basename "$d")
+            NVCC=.cuda/bin/nvcc tools/build-solver.sh "${d%/}" sm_90a "/tmp/solver-$(basename "$d")"
           done
 
       - name: Device primitives match the reference (host emulation)

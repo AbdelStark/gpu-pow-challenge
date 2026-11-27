@@ -12,6 +12,10 @@ use std::process::{Child, Stdio};
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
+/// After the last digest byte, how long the worker is watched for an exit of
+/// its own. Outside the clock, so it does not affect the score.
+const EXIT_GRACE: Duration = Duration::from_millis(500);
+
 pub struct WorkerSetup<'a> {
     pub solver: &'a Path,
     pub params: Params,
@@ -216,8 +220,9 @@ impl ReadyWorker {
         let cpu1 = tree_cpu_seconds(self.pid());
         // The protocol requires the worker to stay alive until the harness kills
         // it: a worker that exits on its own right after the last byte could hide
-        // its CPU time from the /proc accounting above.
-        let exited_early = matches!(self.child.try_wait(), Ok(Some(_)));
+        // its CPU time from the /proc accounting above. A single check here would
+        // race with an exit already in progress, so watch for a grace period.
+        let exited_early = matches!(res, Ok(Ev::Done(..))) && self.exits_within(EXIT_GRACE);
         let init_seconds = self.init_seconds;
         let out = match res {
             Ok(Ev::Done(..)) if exited_early => {
@@ -235,6 +240,19 @@ impl ReadyWorker {
         };
         self.kill();
         out
+    }
+
+    fn exits_within(&mut self, grace: Duration) -> bool {
+        let t = Instant::now();
+        loop {
+            if matches!(self.child.try_wait(), Ok(Some(_))) {
+                return true;
+            }
+            if t.elapsed() >= grace {
+                return false;
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        }
     }
 
     /// Kill the whole process group, reap, and wipe the scratch directory.
