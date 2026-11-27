@@ -45,8 +45,9 @@ harness                    SIGKILL the worker's process group, reap, wipe scratc
 ```
 
 The worker must stay alive after its last byte until the harness kills it. A
-worker that exits on its own fails the trial, because exiting early could hide
-CPU time from the `/proc` accounting (§6).
+worker that exits on its own within 0.5 s of its last byte (watched outside the
+clock) fails the trial, because exiting early could hide CPU time from the
+`/proc` accounting (§6).
 
 Contestants implement two C functions (`worker/tpow_solver.h`):
 `tpow_init` (untimed: contexts, allocation, autotuning, warm-up with any seed)

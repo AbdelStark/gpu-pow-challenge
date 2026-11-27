@@ -20,8 +20,12 @@ jobs:
         with:
           persist-credentials: false
 
+      # The runner image ships third-party apt sources (e.g. packages.microsoft.com)
+      # that intermittently fail `apt-get update`; only Ubuntu packages are needed.
       - name: System packages
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq bubblewrap jq python3-numpy
+        run: |
+          sudo apt-get update -qq || echo "::warning::apt-get update reported errors; continuing"
+          sudo apt-get install -y -qq bubblewrap jq python3-numpy
 
       - name: Allow unprivileged user namespaces (for bubblewrap)
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
