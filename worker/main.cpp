@@ -84,7 +84,6 @@ int main() {
     std::fflush(stdout);
 
     while (read_line(line)) {
-        if (line == "QUIT") break;
         if (line.empty()) continue;
         char seed_hex[65] = {0};
         unsigned long long first = 0, n = 0;

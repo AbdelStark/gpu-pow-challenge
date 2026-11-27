@@ -231,7 +231,6 @@ extern "C" int tpow_init(const tpow_params_t* params) {
 
 extern "C" int tpow_run(const uint8_t seed[32], uint64_t first_unit, uint64_t n_units,
                         tpow_emit_fn emit, void* emit_ctx) {
-    const tpow_params_t& p = S.p;
     SeedWords sw = tpow::seed_words(seed);
     SeedBytes sb;
     std::memcpy(sb.b, seed, 32);
@@ -241,7 +240,6 @@ extern "C" int tpow_run(const uint8_t seed[32], uint64_t first_unit, uint64_t n_
         if (prg_fill(sw, tpow::stream_w(uint32_t(l)), 0, uint64_t(L.out) * L.in, L.w)) return -1;
         if (prg_fill(sw, tpow::stream_b(uint32_t(l)), 0, uint64_t(L.out) * 4, L.b)) return -1;
     }
-    (void)p;
     const uint64_t n_batches = (n_units + kBatchUnits - 1) / kBatchUnits;
     for (uint64_t b = 0; b <= n_batches; ++b) {
         if (b < n_batches) {

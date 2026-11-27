@@ -3,7 +3,8 @@
 **Status:** v1, frozen for the H100/H200 leaderboards. This document is normative.
 Where it disagrees with code, the document wins and the code is a bug.
 Reference implementations: Rust (`src/spec.rs`, `src/prg.rs`, `src/model.rs`),
-Python (`reference/tpow_ref.py`), CUDA host/device primitives (`solver/tpow_device.cuh`).
+Python (`reference/tpow_ref.py`), CUDA host/device primitives
+(`solvers/<track>/tpow_device.cuh`).
 Known-answer vectors: `tests/vectors/tpow-v1.json`, `tests/vectors/tpow-tiny.json`.
 
 ## 1. Overview
@@ -133,5 +134,5 @@ scoring rules (docs/HARNESS.md). The function itself has no free parameters.
   are 32 bytes per row, so hashing is ~0.3% of the work. The `L*d^2` hidden layers
   are 99.3% of `ops_row`, so the cost is tensor-core GEMM.
 * **Independent units.** Units can be checked one at a time on a CPU, so the
-  verifier can spot-check (docs/HARNESS.md §Audits). A unit costs 2.16 GOP to
+  verifier can spot-check (docs/HARNESS.md §5). A unit costs 2.16 GOP to
   verify (~10 ms on a few AVX-512 VNNI cores).

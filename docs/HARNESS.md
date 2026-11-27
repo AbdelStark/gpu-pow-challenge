@@ -139,8 +139,7 @@ at 100 ms by `nvidia-smi` and reported per trial.
   and its own process group.
 * Self-test: `tests/harness.rs::sandbox_blocks_escapes` runs an adversarial worker
   that tries the network, writes to `/etc` and `/usr`, reads the harness's
-  environment and lists `/home`. All must fail. The same worker unsandboxed does
-  escape, which confirms the test has teeth.
+  environment and lists `/home`. All must fail.
 * Some driver/kernel combinations refuse `cuInit` inside unprivileged user
   namespaces. Then set `"sandbox_user_namespace": false` for that host (the other
   isolation layers remain).

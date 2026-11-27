@@ -1,6 +1,6 @@
 /*
  * TPoW solver API — the contract between the protected worker main
- * (worker/main.cpp) and the contestant's solver (everything under solver/).
+ * (worker/main.cpp) and the contestant's solver (solvers/<track>/).
  *
  * PROTECTED FILE: submissions may not modify anything under worker/.
  *

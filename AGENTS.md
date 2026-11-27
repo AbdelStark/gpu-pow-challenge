@@ -20,11 +20,15 @@ You are optimising a GPU kernel for a ranked benchmark. Read `README.md`
 ./benchmark.sh --track h100-sxm  --note "idea"   # on the ranked hardware
 ```
 
+`local-gpu` builds `solvers/h100-sxm/`. For another lineage, set
+`TPOW_SOLVER_SRC=solvers/<track>`.
+
 If the conformance run fails, the harness prints the first wrong unit and a
 `tpow-kat digests ...` command that prints the expected digests. To check
 `__host__ __device__` helpers without a GPU:
 
 ```bash
+mkdir -p build
 nvcc -O3 -std=c++17 -arch=sm_90a -I solvers/h100-sxm tools/cuda-host-test/host_test.cu -o build/host_test
 build/host_test tests/vectors/tpow-v1.json 2
 ```

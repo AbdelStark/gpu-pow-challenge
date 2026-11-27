@@ -4,7 +4,8 @@
 #   ./benchmark.sh [--track <name>] [--note "what I tried"] [extra tpow-bench args]
 #
 # Tracks: leaderboards/<name>.json (h100-sxm, h200-sxm, h100-sxm-gpucpu, local-gpu, dev-cpu).
-# Env:    TPOW_SOLVER_SRC  solver source dir (default solvers/<track>)
+# Env:    TPOW_TRACK       default track (h100-sxm)
+#         TPOW_SOLVER_SRC  solver source dir (default solvers/<track>, else solvers/h100-sxm)
 #         NVCC             path to nvcc (default: PATH, then /usr/local/cuda/bin/nvcc)
 #         TPOW_GPU_INDEX   GPU index (default 0)
 #

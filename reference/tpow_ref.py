@@ -64,7 +64,8 @@ def unit_digest(p, seed, layers, unit: int) -> bytes:
 def main():
     args = sys.argv[1:]
     if args and args[0] == "check":
-        vec = json.load(open(args[1]))
+        with open(args[1]) as f:
+            vec = json.load(f)
         max_units = int(args[2]) if len(args) > 2 else 1 << 30
         p = vec["params"]
         seed = bytes.fromhex(vec["seed"])

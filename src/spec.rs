@@ -170,8 +170,7 @@ mod tests {
         assert_eq!(q(1, 0), 0x9Eu8 as i8);
         assert_eq!(q(0, 1), q(1, 0));
         assert_eq!(q(-1, 0), ((0xFFFF_FFFFu32.wrapping_mul(Q_MUL)) >> 24) as u8 as i8);
-        // Every bit of the accumulator matters: flipping any single bit of c changes
-        // the output for most (c, b); check bit 0 and bit 31 for a few values.
+        // Every bit of the accumulator matters: flipping bit 0 of c changes the output.
         for c in [12345i32, -777, 1 << 20] {
             assert_ne!(q(c, 99), q(c ^ 1, 99));
         }
