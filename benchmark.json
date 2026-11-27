@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "name": "tpow-gpu-pow",
+  "tracks": [
+    {
+      "name": "h100-sxm",
+      "description": "TPoW-v1 GPU proof of work on one NVIDIA H100 SXM5 80GB (stock 700 W). Compute 2^22 unit digests of a seeded pseudorandom int8 MLP (d=4096, 4 hidden layers; dense INT8 GEMM with exact int32 accumulation) as fast as possible. The seed is revealed only after the worker is ready, timing is external, and outputs are audited on the CPU against the reference. GPU-only: at most 2 CPU cores on average. Edit solvers/h100-sxm. Score: median verified effective INT8 TOPS over 5 measured trials (higher is better).",
+      "category": "cuda",
+      "direction": "+",
+      "editablePaths": ["solvers/h100-sxm"],
+      "setupCommand": ["bash", "-lc", "./setup.sh --track h100-sxm"],
+      "benchmarkCommand": ["bash", "-lc", "./benchmark.sh --track h100-sxm"],
+      "scorePath": "results/h100-sxm/score.json",
+      "maxSubmissionBytes": 8388608,
+      "runner": {
+        "provider": "github-actions",
+        "workflow": "benchmark-h100-sxm.yml",
+        "maxConcurrentWorkflows": 1,
+        "scoreArtifactName": "benchmark-score"
+      }
+    },
+    {
+      "name": "h200-sxm",
+      "description": "TPoW-v1 GPU proof of work on one NVIDIA H200 SXM 141GB (stock 700 W). Same function, rules and scoring as h100-sxm. Edit solvers/h200-sxm. Score: median verified effective INT8 TOPS over 5 measured trials (higher is better).",
+      "category": "cuda",
+      "direction": "+",
+      "editablePaths": ["solvers/h200-sxm"],
+      "setupCommand": ["bash", "-lc", "./setup.sh --track h200-sxm"],
+      "benchmarkCommand": ["bash", "-lc", "./benchmark.sh --track h200-sxm"],
+      "scorePath": "results/h200-sxm/score.json",
+      "maxSubmissionBytes": 8388608,
+      "runner": {
+        "provider": "github-actions",
+        "workflow": "benchmark-h200-sxm.yml",
+        "maxConcurrentWorkflows": 1,
+        "scoreArtifactName": "benchmark-score"
+      }
+    },
+    {
+      "name": "h100-sxm-gpucpu",
+      "description": "RED TEAM: TPoW-v1 on one H100 SXM5 with the whole host CPU available (no CPU budget). How much can the CPU next to the GPU add? The gap to the h100-sxm track is the published answer. Edit solvers/h100-sxm-gpucpu. Score: median verified effective INT8 TOPS (higher is better).",
+      "category": "cuda",
+      "direction": "+",
+      "editablePaths": ["solvers/h100-sxm-gpucpu"],
+      "setupCommand": ["bash", "-lc", "./setup.sh --track h100-sxm-gpucpu"],
+      "benchmarkCommand": ["bash", "-lc", "./benchmark.sh --track h100-sxm-gpucpu"],
+      "scorePath": "results/h100-sxm-gpucpu/score.json",
+      "maxSubmissionBytes": 8388608,
+      "runner": {
+        "provider": "github-actions",
+        "workflow": "benchmark-h100-sxm-gpucpu.yml",
+        "maxConcurrentWorkflows": 1,
+        "scoreArtifactName": "benchmark-score"
+      }
+    }
+  ]
+}

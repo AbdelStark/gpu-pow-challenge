@@ -1,0 +1,145 @@
+# Reusable ranked benchmark for one GPU track. Called by benchmark-<track>.yml,
+# which Yukon dispatches for each submission (refs/heads/submissions/*).
+#
+# Trust model:
+#   * The harness, scripts and leaderboard config come from a TRUSTED checkout of
+#     the default branch. The submission contributes only solvers/<track>/.
+#   * The solver is compiled with fixed flags and runs under bubblewrap with no
+#     network, a read-only filesystem and only the selected GPU's device nodes.
+#   * Timing is external, the seed is private until the worker is READY, and
+#     outputs are audited on the CPU against the reference implementation.
+name: Benchmark GPU track (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      track:
+        required: true
+        type: string
+      runs_on:
+        description: JSON array of runner labels for the dedicated GPU host
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  benchmark:
+    name: Benchmark ${{ inputs.track }}
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: 120
+    outputs:
+      score: ${{ steps.score.outputs.value }}
+    env:
+      TRACK: ${{ inputs.track }}
+    steps:
+      - name: Checkout trusted harness (default branch)
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: trusted
+          persist-credentials: false
+          clean: true
+
+      - name: Checkout submission (untrusted)
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: untrusted
+          fetch-depth: 2
+          persist-credentials: false
+
+      # Yukon enforces editablePaths when it builds the commit; check again here.
+      - name: Verify submission surface
+        if: startsWith(github.ref, 'refs/heads/submissions/')
+        working-directory: untrusted
+        shell: bash
+        run: |
+          set -euo pipefail
+          read -r -a parents <<< "$(git rev-list --parents -n 1 HEAD)"
+          (( ${#parents[@]} == 2 )) || { echo "submission must be a single-parent commit" >&2; exit 1; }
+          while IFS= read -r -d '' p; do
+            case "$p" in
+              "solvers/$TRACK"/*) ;;
+              *) echo "submission changed a non-editable path: $p" >&2; exit 1 ;;
+            esac
+          done < <(git diff --no-renames --name-only -z HEAD^ HEAD)
+
+      - name: Stage solver into trusted tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="untrusted/solvers/$TRACK"
+          [[ -d "$src" ]] || { echo "missing $src" >&2; exit 1; }
+          if [[ -n "$(find "$src" -type l -o -type p -o -type s -o -type b -o -type c)" ]]; then
+            echo "solver tree may only contain regular files and directories" >&2; exit 1
+          fi
+          bytes=$(du -sb "$src" | cut -f1)
+          (( bytes <= 8388608 )) || { echo "solver tree too large: $bytes bytes" >&2; exit 1; }
+          rm -rf "trusted/solvers/$TRACK"
+          cp -R "$src" "trusted/solvers/$TRACK"
+
+      - name: Runner preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p trusted/results/"$TRACK"
+          {
+            echo "date: $(date -u +%FT%TZ)"
+            echo "host: $(hostname)"
+            echo "kernel: $(uname -r)"
+            echo "cpu: $(awk -F: '/^model name/ {print $2; exit}' /proc/cpuinfo) x $(nproc)"
+            nvidia-smi --query-gpu=index,name,uuid,driver_version,vbios_version,power.limit,power.default_limit,clocks.max.sm,persistence_mode,ecc.mode.current --format=csv
+            nvidia-smi --query-compute-apps=pid,process_name --format=csv
+          } | tee trusted/results/"$TRACK"/runner.txt
+
+      - name: Setup
+        working-directory: trusted
+        shell: bash
+        run: ./setup.sh --track "$TRACK"
+
+      - name: Benchmark
+        working-directory: trusted
+        shell: bash
+        run: ./benchmark.sh --track "$TRACK" --note "${{ github.ref_name }}@${{ github.sha }}"
+
+      - name: Report score
+        id: score
+        working-directory: trusted
+        shell: bash
+        run: |
+          set -euo pipefail
+          f="results/$TRACK/score.json"
+          score=$(jq -er '.score | select(type == "number")' "$f")
+          echo "value=$score" >> "$GITHUB_OUTPUT"
+          {
+            echo "## TPoW $TRACK"
+            echo
+            echo "| Metric | Value |"
+            echo "| --- | ---: |"
+            echo "| Score (verified effective INT8 TOPS, median) | \`$score\` |"
+            jq -r '.metrics | to_entries[] | select(.value|type=="number") | "| \(.key) | `\(.value)` |"' "$f"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "score: $score"
+
+      - name: Upload score
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: benchmark-score
+          path: trusted/results/${{ inputs.track }}/score.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload run transcript
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: benchmark-run
+          path: |
+            trusted/results/${{ inputs.track }}/run.json
+            trusted/results/${{ inputs.track }}/runner.txt
+          if-no-files-found: warn
+          retention-days: 90
