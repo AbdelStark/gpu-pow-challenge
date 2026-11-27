@@ -5,8 +5,7 @@
 > verified effective INT8 TOPS on a fixed GPU, with one leaderboard per GPU model,
 > starting with **H100 SXM** and **H200 SXM**.
 
-A Lucid x Yukon autoresearch challenge. Lucid writes the verifier; Yukon hosts the challenge.
-
+A Lucid x Yukon autoresearch challenge. 
 ---
 
 ## Why this matters
