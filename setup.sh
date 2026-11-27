@@ -69,17 +69,7 @@ if [[ -n "$ARCH" ]]; then
     exit 1
   fi
   "$NVCC" --version | tail -1
-  # Header-only CUTLASS/CuTe, pinned by commit, available to solvers as
-  # -I third_party/cutlass/include (no other third-party code may be added).
-  CUTLASS_TAG="v3.9.2"
-  CUTLASS_COMMIT="ad7b2f5e84fcfa124cb02b91d5bd26d238c0459e"
-  if [[ ! -d third_party/cutlass/include ]]; then
-    mkdir -p third_party
-    git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$CUTLASS_TAG" \
-      https://github.com/NVIDIA/cutlass third_party/cutlass
-  fi
-  got="$(git -C third_party/cutlass rev-parse HEAD)"
-  [[ "$got" == "$CUTLASS_COMMIT" ]] || { echo "setup.sh: third_party/cutlass is at $got, expected $CUTLASS_COMMIT" >&2; exit 1; }
+  tools/fetch-cutlass.sh
   command -v nvidia-smi >/dev/null 2>&1 || { echo "setup.sh: nvidia-smi not found (no NVIDIA driver?)" >&2; exit 1; }
   nvidia-smi --query-gpu=index,name,driver_version,persistence_mode,power.limit,power.default_limit --format=csv
   if nvidia-smi --query-gpu=persistence_mode --format=csv,noheader | grep -qi disabled; then

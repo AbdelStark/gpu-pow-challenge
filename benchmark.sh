@@ -12,7 +12,7 @@
 # Steps:
 #   1. clean stale outputs (a submission can never pre-seed a score)
 #   2. build the TRUSTED harness offline (never links solver code)
-#   3. build the UNTRUSTED solver with fixed flags: worker/main.cpp + solver dir
+#   3. build the UNTRUSTED solver with fixed flags (tools/build-solver.sh)
 #   4. best-effort public beacon (drand quicknet) for auditability
 #   5. take the box-wide GPU lock and run tpow-bench, which sandboxes the solver,
 #      times it externally, audits outputs on the CPU and writes the score.
@@ -55,17 +55,9 @@ else
   NVCC="${NVCC:-$(command -v nvcc || true)}"
   [[ -z "$NVCC" && -x /usr/local/cuda/bin/nvcc ]] && NVCC=/usr/local/cuda/bin/nvcc
   [[ -n "$NVCC" ]] || { echo "benchmark.sh: nvcc not found (run ./setup.sh)" >&2; exit 1; }
-  mapfile -t SOURCES < <(find "$SRC" -maxdepth 1 -type f \( -name '*.cu' -o -name '*.cpp' \) | LC_ALL=C sort)
-  [[ ${#SOURCES[@]} -gt 0 ]] || { echo "benchmark.sh: no .cu/.cpp sources in $SRC" >&2; exit 1; }
-  CUDA_LIB="$(dirname "$(dirname "$NVCC")")/lib64"
-  echo "-- building solver from $SRC (${#SOURCES[@]} files, -arch=$ARCH)"
-  "$NVCC" -O3 -std=c++17 -arch="$ARCH" -lineinfo \
-    -I worker -I "$SRC" -I third_party/cutlass/include -I third_party/cutlass/tools/util/include \
-    --expt-relaxed-constexpr \
-    worker/main.cpp "${SOURCES[@]}" \
-    -L "$CUDA_LIB" -lcublasLt -lcublas \
-    -o "$BUILD/solver"
+  NVCC="$NVCC" tools/build-solver.sh "$SRC" "$ARCH" "$BUILD/solver"
   SOLVER="$ROOT/$BUILD/solver"
+  CUDA_LIB="$(dirname "$(dirname "$NVCC")")/lib64"
   # The sandbox hides /home and /root; expose the CUDA libs the solver links.
   export TPOW_WORKER_LD_LIBRARY_PATH="${TPOW_WORKER_LD_LIBRARY_PATH:-$CUDA_LIB}"
 fi

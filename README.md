@@ -137,7 +137,8 @@ With the Yukon CLI: `yukon clone <setter>/<challenge>/h100-sxm`, improve, then
 Only **`solvers/<track>/`**, one directory per leaderboard so the H100 and
 H200 lineages do not overwrite each other. Everything else is the harness;
 the ranked workflow rejects a submission that touches it. Split the solver
-into as many `.cu`/`.cpp` files as you like. `benchmark.sh` compiles it with:
+into as many `.cu`/`.cpp` files as you like. `tools/build-solver.sh`, used by
+both `benchmark.sh` and CI, compiles it with:
 
 ```
 nvcc -O3 -std=c++17 -arch=<cuda_arch> -lineinfo \
@@ -191,7 +192,7 @@ them as leads: verify claims and re-run the benchmark before relying on them.
 | `leaderboards/*.json` | per-track hardware, sizes, budgets and gates |
 | `reference/tpow_ref.py` | independent numpy reference |
 | `tests/` | KAT vectors and adversarial harness self-tests |
-| `tools/` | CUDA host-emulation test, CUDA redist fetcher, AMX microbenchmark |
+| `tools/` | solver build script, CUTLASS and CUDA redist fetchers, CUDA host-emulation test, AMX microbenchmark |
 | `benchmark.json` | Yukon challenge definition (schema v2, three tracks) |
 | `.github/workflows/` | ranked GPU workflows (trusted/untrusted checkout split) and CPU CI |
 

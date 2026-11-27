@@ -51,13 +51,14 @@ jobs:
       - name: Fetch CUDA toolchain
         run: tools/fetch-cuda-redist.sh .cuda
 
-      - name: Compile every solver for sm_90a
+      - name: Fetch pinned CUTLASS
+        run: tools/fetch-cutlass.sh
+
+      - name: Compile every solver for sm_90a (same script and flags as benchmark.sh)
         run: |
           set -euo pipefail
           for d in solvers/*/; do
-            echo "== $d"
-            .cuda/bin/nvcc -O3 -std=c++17 -arch=sm_90a -I worker -I "$d" worker/main.cpp "$d"*.cu \
-              -L .cuda/lib64 -lcublasLt -lcublas -o /tmp/solver-$(basename "$d")
+            NVCC=.cuda/bin/nvcc tools/build-solver.sh "${d%/}" sm_90a "/tmp/solver-$(basename "$d")"
           done
 
       - name: Device primitives match the reference (host emulation)
