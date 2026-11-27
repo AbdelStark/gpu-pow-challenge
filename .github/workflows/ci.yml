@@ -1,0 +1,70 @@
+# CPU-only CI: reference tests, harness self-tests (incl. adversarial workers
+# and sandbox escape checks), cross-implementation known-answer tests, and a
+# compile + host-emulation check of every GPU solver. No GPU needed.
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+
+      - name: System packages
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq bubblewrap jq python3-numpy
+
+      - name: Allow unprivileged user namespaces (for bubblewrap)
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+
+      - name: Rust tests (reference, kernels, harness self-tests)
+        run: cargo test --release --locked
+
+      - name: Known-answer vectors are up to date
+        run: |
+          cargo run --release --locked --bin tpow-kat -- check tests/vectors/tpow-tiny.json
+          cargo run --release --locked --bin tpow-kat -- check tests/vectors/tpow-v1.json
+
+      - name: Independent Python reference agrees
+        run: |
+          python3 reference/tpow_ref.py check tests/vectors/tpow-tiny.json
+          python3 reference/tpow_ref.py check tests/vectors/tpow-v1.json 1
+
+      - name: End-to-end harness run (CPU dev track)
+        run: ./benchmark.sh --track dev-cpu --note ci
+
+      - name: Cache CUDA redistributables
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: .cuda
+          key: cuda-redist-12.8-${{ hashFiles('tools/fetch-cuda-redist.sh') }}
+
+      - name: Fetch CUDA toolchain
+        run: tools/fetch-cuda-redist.sh .cuda
+
+      - name: Compile every solver for sm_90a
+        run: |
+          set -euo pipefail
+          for d in solvers/*/; do
+            echo "== $d"
+            .cuda/bin/nvcc -O3 -std=c++17 -arch=sm_90a -I worker -I "$d" worker/main.cpp "$d"*.cu \
+              -L .cuda/lib64 -lcublasLt -lcublas -o /tmp/solver-$(basename "$d")
+          done
+
+      - name: Device primitives match the reference (host emulation)
+        run: |
+          set -euo pipefail
+          for d in solvers/*/; do
+            .cuda/bin/nvcc -O3 -std=c++17 -arch=sm_90a -I "$d" tools/cuda-host-test/host_test.cu -L .cuda/lib64 -o /tmp/host_test
+            /tmp/host_test tests/vectors/tpow-tiny.json
+            /tmp/host_test tests/vectors/tpow-v1.json 1
+          done

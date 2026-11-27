@@ -1,0 +1,20 @@
+{
+  "name": "dev-cpu",
+  "description": "CPU-only development leaderboard: tiny instance, no GPU required, never official. Used by CI and for testing the harness end to end with tpow-cpu-solver.",
+  "function": "tpow-tiny",
+  "gpu": null,
+  "units_per_trial": 20000,
+  "conformance_units": 64,
+  "warmup_trials": 1,
+  "measured_trials": 3,
+  "audit_samples_per_trial": 256,
+  "cpu_budget_cores": null,
+  "init_timeout_s": 60,
+  "trial_timeout_s": 120,
+  "thermal_gate_c": null,
+  "thermal_gate_max_wait_s": 0,
+  "sandbox": "auto",
+  "sandbox_user_namespace": true,
+  "official": false,
+  "cuda_arch": null
+}

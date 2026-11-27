@@ -1,0 +1,30 @@
+{
+  "name": "h200-sxm",
+  "description": "TPoW-v1 on one NVIDIA H200 SXM 141GB (700 W, stock clocks and power limit). GPU-only: the worker may average at most 2 CPU cores during the timed window. Score: median verified effective INT8 TOPS over 5 measured trials of 2^22 units.",
+  "function": "tpow-v1",
+  "gpu": {
+    "name_must_contain": [
+      "H200"
+    ],
+    "name_must_not_contain": [
+      "NVL"
+    ],
+    "peak_int8_dense_tops": 1979.0,
+    "peak_reference_clock_mhz": 1830.0,
+    "require_default_power_limit": true
+  },
+  "cuda_arch": "sm_90a",
+  "units_per_trial": 4194304,
+  "conformance_units": 512,
+  "warmup_trials": 2,
+  "measured_trials": 5,
+  "audit_samples_per_trial": 1024,
+  "cpu_budget_cores": 2.0,
+  "init_timeout_s": 300,
+  "trial_timeout_s": 600,
+  "thermal_gate_c": 45.0,
+  "thermal_gate_max_wait_s": 180,
+  "sandbox": "bwrap",
+  "sandbox_user_namespace": true,
+  "official": true
+}

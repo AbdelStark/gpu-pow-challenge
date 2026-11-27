@@ -1,0 +1,20 @@
+name: Benchmark h100-sxm-gpucpu
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: benchmark-h100-sxm-gpucpu-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    uses: ./.github/workflows/benchmark-gpu.yml
+    with:
+      track: h100-sxm-gpucpu
+      # Dedicated, otherwise idle GPU host. benchmark.sh also takes a box-wide GPU lock.
+      runs_on: '["self-hosted", "linux", "x64", "tpow-h100-sxm"]'

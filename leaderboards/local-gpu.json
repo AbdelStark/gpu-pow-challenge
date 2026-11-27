@@ -1,0 +1,26 @@
+{
+  "name": "local-gpu",
+  "description": "Local development on ANY NVIDIA GPU (never official). Smaller trials, sandbox optional, no hardware or power checks.",
+  "function": "tpow-v1",
+  "gpu": {
+    "name_must_contain": [],
+    "name_must_not_contain": [],
+    "peak_int8_dense_tops": 0.0,
+    "peak_reference_clock_mhz": 1.0,
+    "require_default_power_limit": false
+  },
+  "cuda_arch": "native",
+  "units_per_trial": 262144,
+  "conformance_units": 1024,
+  "warmup_trials": 1,
+  "measured_trials": 3,
+  "audit_samples_per_trial": 256,
+  "cpu_budget_cores": null,
+  "init_timeout_s": 300,
+  "trial_timeout_s": 600,
+  "thermal_gate_c": null,
+  "thermal_gate_max_wait_s": 0,
+  "sandbox": "auto",
+  "sandbox_user_namespace": true,
+  "official": false
+}
